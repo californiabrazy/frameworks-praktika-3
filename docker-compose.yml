@@ -27,6 +27,26 @@ services:
     ports:
       - "5432:5432"
 
+  db_csv:
+    image: postgres:16
+    container_name: iss_db_csv
+    environment:
+      POSTGRES_DB: telemetry_data
+      POSTGRES_USER: csvuser
+      POSTGRES_PASSWORD: csvpass
+    volumes:
+      - csvdata:/var/lib/postgresql/data
+      - ./db/init-csv.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - backend
+    ports:
+      - "5434:5432" 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U csvuser -d telemetry_data"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   rust_iss:
     build:
       context: ./services/rust-iss
@@ -97,20 +117,20 @@ services:
       - "8080:80"
     restart: unless-stopped
 
-  pascal_legacy:
+  go_legacy:
     build:
-      context: ./services/pascal-legacy
-    container_name: pascal_legacy
+      context: ./services/go-legacy
+    container_name: go_legacy
     environment:
       CSV_OUT_DIR: /data/csv
       GEN_PERIOD_SEC: ${PAS_LEGACY_PERIOD:-300}
-      PGHOST: db
+      PGHOST: db_csv
       PGPORT: 5432
-      PGUSER: monouser
-      PGPASSWORD: monopass
-      PGDATABASE: monolith
+      PGUSER: csvuser
+      PGPASSWORD: csvpass
+      PGDATABASE: telemetry_data
     depends_on:
-      db:
+      db_csv:
         condition: service_healthy
     volumes:
       - csvdata:/data/csv
