@@ -151,13 +151,9 @@ func main() {
 
 	log.Printf("[go] LegacyCSV generator started (period = %d sec)", periodSec)
 
-	for {
-		if err := GenerateAndCopy(); err != nil {
-			log.Printf("[go][error] %v", err)
-		} else {
-			log.Printf("[go] %s — done", time.Now().Format("15:04:05"))
-		}
-
-		time.Sleep(time.Duration(periodSec) * time.Second)
+	if err := GenerateAndCopy(); err != nil {
+		log.Printf("[go][error] %v", err)
+	} else {
+		log.Printf("[go] %s — done", time.Now().Format("15:04:05"))
 	}
 }

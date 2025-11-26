@@ -1,6 +1,4 @@
-# Запуск каждые 5 минут
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-# Запуск бинарника
 */5 * * * * root /usr/local/bin/legacycsv >> /proc/1/fd/1 2>> /proc/1/fd/2
