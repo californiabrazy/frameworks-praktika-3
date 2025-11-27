@@ -22,8 +22,8 @@ class DashboardController extends Controller
         $iss   = $this->getJson($b.'/last');
         $trend = []; // фронт сам заберёт /api/iss/trend (через nginx прокси)
 
-        // Чтение и парсинг последнего CSV из go-legacy
-        $csvData = $this->getLatestCsvData();
+        // Получение всех записей из БД db_csv
+        $csvData = $this->getCsvDataFromDb();
 
         return view('dashboard', [
             'iss' => $iss,
@@ -42,51 +42,29 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function getLatestCsvData(): array
+    private function getCsvDataFromDb(): array
     {
-        $csvDir = '/data/csv';
-        if (!is_dir($csvDir)) {
-            return [];
-        }
+        try {
+            $records = \DB::connection('db_csv')
+                ->table('telemetry_legacy')
+                ->orderBy('recorded_at', 'desc')
+                ->get();
 
-        $files = glob($csvDir . '/*.csv');
-        if (empty($files)) {
-            return [];
-        }
-
-        // Найти файл с самым поздним временем модификации
-        $latestFile = '';
-        $latestTime = 0;
-        foreach ($files as $file) {
-            $mtime = filemtime($file);
-            if ($mtime > $latestTime) {
-                $latestTime = $mtime;
-                $latestFile = $file;
+            $data = [];
+            foreach ($records as $record) {
+                $data[] = [
+                    'recorded_at' => $record->recorded_at,
+                    'voltage' => $record->voltage,
+                    'temp' => $record->temp,
+                    'is_valid' => $record->is_valid ? 'TRUE' : 'FALSE',
+                    'source_file' => $record->source_file,
+                ];
             }
-        }
-
-        if (!$latestFile || !file_exists($latestFile)) {
+            return $data;
+        } catch (\Exception $e) {
+            // В случае ошибки возвращаем пустой массив
             return [];
         }
-
-        $data = [];
-        if (($handle = fopen($latestFile, 'r')) !== false) {
-            $header = fgetcsv($handle); // Пропустить заголовок
-            while (($row = fgetcsv($handle)) !== false) {
-                if (count($row) >= 5) {
-                    $data[] = [
-                        'recorded_at' => $row[0],
-                        'voltage' => $row[1],
-                        'temp' => $row[2],
-                        'is_valid' => $row[3],
-                        'source_file' => $row[4],
-                    ];
-                }
-            }
-            fclose($handle);
-        }
-
-        return $data;
     }
 
     /**

@@ -85,6 +85,12 @@ services:
       DB_DATABASE: monolith
       DB_USERNAME: monouser
       DB_PASSWORD: monopass
+      DB_CSV_CONNECTION: db_csv
+      DB_CSV_HOST: db_csv
+      DB_CSV_PORT: 5432
+      DB_CSV_DATABASE: telemetry_data
+      DB_CSV_USERNAME: csvuser
+      DB_CSV_PASSWORD: csvpass
     depends_on:
       db:
         condition: service_healthy

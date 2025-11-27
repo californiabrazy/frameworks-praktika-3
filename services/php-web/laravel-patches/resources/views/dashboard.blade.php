@@ -101,17 +101,17 @@
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">Telemetry Data (CSV from go-legacy)</h5>
+          <h5 class="card-title">Данные телеметрии (CSV данные)</h5>
           @if(!empty($csv_data))
             <div class="table-responsive">
               <table class="table table-striped table-sm">
                 <thead>
                   <tr>
-                    <th>Recorded At</th>
-                    <th>Voltage</th>
-                    <th>Temperature</th>
-                    <th>Is Valid</th>
-                    <th>Source File</th>
+                    <th>Записано</th>
+                    <th>Напряжение</th>
+                    <th>Температура</th>
+                    <th>Действительность</th>
+                    <th>Файл</th>
                   </tr>
                 </thead>
                 <tbody>
