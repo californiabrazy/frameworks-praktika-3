@@ -22,6 +22,9 @@ class DashboardController extends Controller
         $iss   = $this->getJson($b.'/last');
         $trend = []; // фронт сам заберёт /api/iss/trend (через nginx прокси)
 
+        // Чтение и парсинг последнего CSV из go-legacy
+        $csvData = $this->getLatestCsvData();
+
         return view('dashboard', [
             'iss' => $iss,
             'trend' => $trend,
@@ -32,10 +35,58 @@ class DashboardController extends Controller
             'jw_observation_files' => [],
             'metrics' => [
                 'iss_speed' => $iss['payload']['velocity'] ?? null,
-                'iss_alt'   => $iss['payload']['altitude'] ?? null,
+                'iss_alt' => $iss['payload']['altitude'] ?? null,
                 'neo_total' => 0,
             ],
+            'csv_data' => $csvData,
         ]);
+    }
+
+    private function getLatestCsvData(): array
+    {
+        $csvDir = '/data/csv';
+        if (!is_dir($csvDir)) {
+            return [];
+        }
+
+        $files = glob($csvDir . '/*.csv');
+        if (empty($files)) {
+            return [];
+        }
+
+        // Найти файл с самым поздним временем модификации
+        $latestFile = '';
+        $latestTime = 0;
+        foreach ($files as $file) {
+            $mtime = filemtime($file);
+            if ($mtime > $latestTime) {
+                $latestTime = $mtime;
+                $latestFile = $file;
+            }
+        }
+
+        if (!$latestFile || !file_exists($latestFile)) {
+            return [];
+        }
+
+        $data = [];
+        if (($handle = fopen($latestFile, 'r')) !== false) {
+            $header = fgetcsv($handle); // Пропустить заголовок
+            while (($row = fgetcsv($handle)) !== false) {
+                if (count($row) >= 5) {
+                    $data[] = [
+                        'recorded_at' => $row[0],
+                        'voltage' => $row[1],
+                        'temp' => $row[2],
+                        'is_valid' => $row[3],
+                        'source_file' => $row[4],
+                    ];
+                }
+            }
+            fclose($handle);
+        }
+
+        return $data;
     }
 
     /**

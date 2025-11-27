@@ -54,7 +54,7 @@ func GenerateXLSX(xlsxPath string, timestamp time.Time, voltage, temp float64, i
 	return nil
 }
 
-// Создание CSV и XLSX, вставка CSV в PostgreSQL
+// Генерация данных, создание CSV и XLSX, вставка CSV в PostgreSQL
 func GenerateAndCopy() error {
 	outDir := Env("CSV_OUT_DIR", "/data/csv")
 

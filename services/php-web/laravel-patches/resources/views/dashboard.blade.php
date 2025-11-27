@@ -96,6 +96,43 @@
         </div>
       </div>
     </div>
+
+    {{-- НИЖНЯЯ ПОЛОСА: Таблица CSV из go-legacy --}}
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Telemetry Data (CSV from go-legacy)</h5>
+          @if(!empty($csv_data))
+            <div class="table-responsive">
+              <table class="table table-striped table-sm">
+                <thead>
+                  <tr>
+                    <th>Recorded At</th>
+                    <th>Voltage</th>
+                    <th>Temperature</th>
+                    <th>Is Valid</th>
+                    <th>Source File</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($csv_data as $row)
+                    <tr>
+                      <td>{{ $row['recorded_at'] }}</td>
+                      <td>{{ $row['voltage'] }}</td>
+                      <td>{{ $row['temp'] }}</td>
+                      <td>{{ $row['is_valid'] }}</td>
+                      <td>{{ $row['source_file'] }}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          @else
+            <div class="text-muted">No CSV data available.</div>
+          @endif
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
