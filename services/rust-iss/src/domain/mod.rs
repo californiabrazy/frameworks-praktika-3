@@ -1,3 +1,8 @@
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -57,4 +62,25 @@ pub struct SpaceSummary {
     pub spacex: Value,
     pub iss: Value,
     pub osdr_count: i64,
+}
+
+#[derive(Debug)]
+pub enum ApiError {
+    InternalServerError(String),
+    NotFound(String),
+    BadRequest(String),
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let (status, message) = match self {
+            ApiError::InternalServerError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
+            ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
+        };
+        let body = Json(serde_json::json!({
+            "error": message
+        }));
+        (status, body).into_response()
+    }
 }

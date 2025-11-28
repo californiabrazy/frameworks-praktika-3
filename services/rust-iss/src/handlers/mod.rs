@@ -6,7 +6,7 @@ use axum::{
 use serde_json::Value;
 use std::collections::HashMap;
 use crate::config::AppState;
-use crate::domain::{Health, Trend, SpaceSummary};
+use crate::domain::{ApiError, Health, Trend, SpaceSummary};
 use crate::repo::{IssRepo, OsdrRepo, CacheRepo};
 use crate::services;
 
@@ -17,7 +17,7 @@ pub async fn health() -> Json<Health> {
     })
 }
 
-pub async fn last_iss(State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn last_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     match IssRepo::get_last(&st.pool).await {
         Ok(Some(data)) => Ok(Json(serde_json::json!({
             "id": data.id,
@@ -26,19 +26,19 @@ pub async fn last_iss(State(st): State<AppState>) -> Result<Json<Value>, (Status
             "payload": data.payload
         }))),
         Ok(None) => Ok(Json(serde_json::json!({"message":"no data"}))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err(ApiError::InternalServerError(e.to_string())),
     }
 }
 
-pub async fn trigger_iss(State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn trigger_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     services::fetch_and_store_iss(&st.pool, &st.fallback_url).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
     last_iss(State(st)).await
 }
 
-pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, (StatusCode, String)> {
+pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, ApiError> {
     let rows = IssRepo::get_last_two_for_trend(&st.pool).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
     if rows.len() < 2 {
         return Ok(Json(Trend {
@@ -78,18 +78,18 @@ pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, (Statu
     }))
 }
 
-pub async fn osdr_sync(State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn osdr_sync(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     let written = services::fetch_and_store_osdr(&st).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
     Ok(Json(serde_json::json!({ "written": written })))
 }
 
-pub async fn osdr_list(State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn osdr_list(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     let limit = std::env::var("OSDR_LIST_LIMIT").ok()
         .and_then(|s| s.parse::<i64>().ok()).unwrap_or(20);
 
     let items = OsdrRepo::list(&st.pool, limit).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
     let out: Vec<Value> = items.into_iter().map(|item| {
         serde_json::json!({
@@ -106,7 +106,7 @@ pub async fn osdr_list(State(st): State<AppState>) -> Result<Json<Value>, (Statu
     Ok(Json(serde_json::json!({ "items": out })))
 }
 
-pub async fn space_latest(Path(src): Path<String>, State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn space_latest(Path(src): Path<String>, State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     match CacheRepo::get_latest(&st.pool, &src).await {
         Ok(Some(item)) => Ok(Json(serde_json::json!({
             "source": item.source,
@@ -114,11 +114,11 @@ pub async fn space_latest(Path(src): Path<String>, State(st): State<AppState>) -
             "payload": item.payload
         }))),
         Ok(None) => Ok(Json(serde_json::json!({ "source": src, "message":"no data" }))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err(ApiError::InternalServerError(e.to_string())),
     }
 }
 
-pub async fn space_refresh(Query(q): Query<HashMap<String, String>>, State(st): State<AppState>) -> Result<Json<Value>, (StatusCode, String)> {
+pub async fn space_refresh(Query(q): Query<HashMap<String, String>>, State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
     let list = q.get("src").cloned().unwrap_or_else(|| "apod,neo,flr,cme,spacex".to_string());
     let mut done = Vec::new();
     for s in list.split(',').map(|x| x.trim().to_lowercase()) {
@@ -134,7 +134,7 @@ pub async fn space_refresh(Query(q): Query<HashMap<String, String>>, State(st): 
     Ok(Json(serde_json::json!({ "refreshed": done })))
 }
 
-pub async fn space_summary(State(st): State<AppState>) -> Result<Json<SpaceSummary>, (StatusCode, String)> {
+pub async fn space_summary(State(st): State<AppState>) -> Result<Json<SpaceSummary>, ApiError> {
     let apod   = CacheRepo::get_latest_as_value(&st.pool, "apod").await;
     let neo    = CacheRepo::get_latest_as_value(&st.pool, "neo").await;
     let flr    = CacheRepo::get_latest_as_value(&st.pool, "flr").await;
@@ -146,7 +146,7 @@ pub async fn space_summary(State(st): State<AppState>) -> Result<Json<SpaceSumma
         .unwrap_or(Value::Null);
 
     let osdr_count = CacheRepo::get_osdr_count(&st.pool).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
     Ok(Json(SpaceSummary {
         apod, neo, flr, cme, spacex, iss, osdr_count
