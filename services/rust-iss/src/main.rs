@@ -7,7 +7,6 @@ mod services;
 mod routes;
 
 use axum::serve;
-use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[tokio::main]

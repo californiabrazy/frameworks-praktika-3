@@ -1,15 +1,20 @@
 use std::time::Duration;
 use reqwest::Client;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
+use reqwest_middleware::ClientBuilder;
 use serde_json::Value;
 
 pub struct NasaClient {
-    client: Client,
+    client: reqwest_middleware::ClientWithMiddleware,
     api_key: String,
 }
 
 impl NasaClient {
     pub fn new(api_key: String) -> Self {
-        let client = Client::builder().timeout(Duration::from_secs(30)).build().unwrap();
+        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+        let base_client = Client::builder().timeout(Duration::from_secs(30)).build().unwrap();
+        let client = ClientBuilder::new(base_client).with(RetryTransientMiddleware::new_with_policy(retry_policy))
+            .build();
         Self { client, api_key }
     }
 

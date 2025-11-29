@@ -1,6 +1,6 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 use sqlx::PgPool;
-use tracing::{error, info};
+use tracing::error;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 #[derive(Clone)]
