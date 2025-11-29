@@ -14,7 +14,7 @@ pub struct Health {
     pub now: DateTime<Utc>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, serde::Deserialize)]
 pub struct IssData {
     pub id: i64,
     pub fetched_at: DateTime<Utc>,

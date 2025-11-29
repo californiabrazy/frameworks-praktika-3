@@ -44,7 +44,7 @@ pub async fn space_summary(State(st): State<AppState>) -> Result<Json<SpaceSumma
     let cme    = CacheRepo::get_latest_as_value(&st.pool, "cme").await;
     let spacex = CacheRepo::get_latest_as_value(&st.pool, "spacex").await;
 
-    let iss = IssRepo::get_last(&st.pool).await.ok().flatten()
+    let iss = IssRepo::get_last(&st.pool, &mut st.redis.clone()).await.ok().flatten()
         .map(|data| serde_json::json!({"at": data.fetched_at, "payload": data.payload}))
         .unwrap_or(Value::Null);
 

@@ -1,14 +1,34 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde_json::Value;
 use sqlx::PgPool;
+use redis::aio::ConnectionManager;
 use crate::clients::{NasaClient, IssClient, SpacexClient};
 use crate::config::AppState;
 use crate::repo::{IssRepo, OsdrRepo, CacheRepo};
+use crate::domain::IssData;
 
-pub async fn fetch_and_store_iss(pool: &PgPool, url: &str) -> anyhow::Result<()> {
+pub async fn fetch_and_store_iss(pool: &PgPool, url: &str, redis: &mut ConnectionManager) -> anyhow::Result<()> {
     let client = IssClient::new();
     let json = client.get(url).await?;
-    IssRepo::insert(pool, url, json).await
+    IssRepo::insert(pool, url, json.clone()).await?;
+
+    // Update cache with new data
+    let cache_key = "iss:latest";
+    let data = IssData {
+        id: 0, // Will be set by DB, but for cache we can use placeholder
+        fetched_at: Utc::now(),
+        source_url: url.to_string(),
+        payload: json,
+    };
+    let _: () = redis::cmd("SETEX")
+        .arg(cache_key)
+        .arg(120)
+        .arg(serde_json::to_string(&data)?)
+        .query_async(redis)
+        .await
+        .unwrap_or(());
+
+    Ok(())
 }
 
 pub async fn fetch_and_store_osdr(st: &AppState) -> anyhow::Result<usize> {

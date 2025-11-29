@@ -5,6 +5,7 @@ volumes:
   pgdata:
   appdata:
   csvdata:
+  redisdata:
 
 services:
   db:
@@ -57,6 +58,7 @@ services:
       NASA_API_KEY: ${NASA_API_KEY:-}
       FETCH_EVERY_SECONDS: ${FETCH_EVERY_SECONDS:-600}
       WHERE_ISS_URL: ${WHERE_ISS_URL:-https://api.wheretheiss.at/v1/satellites/25544}
+      REDIS_URL: redis://redis:6379
     depends_on:
       db:
         condition: service_healthy
@@ -143,3 +145,13 @@ services:
       - ./csv_out:/data/csv
     networks:
       - backend
+
+  redis:
+    image: redis:alpine
+    container_name: iss_redis
+    volumes:
+      - redisdata:/data
+    networks:
+      - backend
+    ports:
+      - "6379:6379"

@@ -2,10 +2,12 @@ use std::time::Duration;
 use sqlx::PgPool;
 use tracing::error;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use redis::aio::ConnectionManager;
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
+    pub redis: ConnectionManager,
     pub nasa_url: String,
     pub nasa_key: String,
     pub fallback_url: String,
@@ -45,8 +47,13 @@ impl AppState {
         let pool = sqlx::postgres::PgPoolOptions::new().max_connections(5).connect(&db_url).await?;
         init_db(&pool).await?;
 
+        let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL is required");
+        let redis_client = redis::Client::open(redis_url)?;
+        let redis = ConnectionManager::new(redis_client).await?;
+
         Ok(AppState {
             pool,
+            redis,
             nasa_url,
             nasa_key,
             fallback_url,
@@ -70,7 +77,7 @@ impl AppState {
             let st = self.clone();
             tokio::spawn(async move {
                 loop {
-                    if let Err(e) = crate::services::fetch_and_store_iss(&st.pool, &st.fallback_url).await { error!("iss err {e:?}") }
+                    if let Err(e) = crate::services::fetch_and_store_iss(&st.pool, &st.fallback_url, &mut st.redis.clone()).await { error!("iss err {e:?}") }
                     tokio::time::sleep(Duration::from_secs(st.every_iss)).await;
                 }
             });

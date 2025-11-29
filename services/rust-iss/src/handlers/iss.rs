@@ -9,7 +9,8 @@ use crate::repo::IssRepo;
 use crate::services;
 
 pub async fn last_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
-    match IssRepo::get_last(&st.pool).await {
+    let mut redis = st.redis.clone();
+    match IssRepo::get_last(&st.pool, &mut redis).await {
         Ok(Some(data)) => Ok(Json(serde_json::json!({
             "id": data.id,
             "fetched_at": data.fetched_at,
@@ -22,7 +23,8 @@ pub async fn last_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiErro
 }
 
 pub async fn trigger_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiError> {
-    services::fetch_and_store_iss(&st.pool, &st.fallback_url).await
+    let mut redis = st.redis.clone();
+    services::fetch_and_store_iss(&st.pool, &st.fallback_url, &mut redis).await
         .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
     last_iss(State(st)).await
 }
