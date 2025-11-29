@@ -1,1 +1,4 @@
 /csv_out/
+
+/services/rust-iss/Cargo.lock
+/services/rust-iss/target/
