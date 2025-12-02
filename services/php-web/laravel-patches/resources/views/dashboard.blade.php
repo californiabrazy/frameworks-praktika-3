@@ -304,29 +304,60 @@ document.addEventListener('DOMContentLoaded', async function () {
         async function load(q){
           body.innerHTML = '<tr><td colspan="5" class="text-muted">Загрузка…</td></tr>';
           const url = '/api/astro/events?' + new URLSearchParams(q).toString();
-          try{
+          try {
             const r  = await fetch(url);
             const js = await r.json();
             raw.textContent = JSON.stringify(js, null, 2);
 
-            const rows = collect(js);
-            if (!rows.length) {
+            const rows = [];
+            if(js.data && Array.isArray(js.data.rows)){
+              const dateFrom = js.data.dates?.from || '—';
+              const dateTo   = js.data.dates?.to || '—';
+              js.data.rows.forEach(rw => {
+                const bodyName = rw.body?.name || rw.body?.id || '—';
+                if(Array.isArray(rw.events) && rw.events.length){
+                  rw.events.forEach(ev => {
+                    // формируем строку "Дополнительно"
+                    let extra = [];
+                    // if(ev.extraInfo) extra.push('Obscuration: '+(ev.extraInfo.obscuration ?? '—'));
+                    // if(ev.eventHighlights?.partialStart?.date) extra.push('Partial start: '+ev.eventHighlights.partialStart.date);
+                    if(ev.eventHighlights?.peak?.date) extra.push('Peak: '+ev.eventHighlights.peak.date);
+                    // if(ev.eventHighlights?.partialEnd?.date) extra.push('Partial end: '+ev.eventHighlights.partialEnd.date);
+                    
+                    rows.push({
+                      name: bodyName,
+                      type: ev.type || '—',
+                      when: `${dateFrom} → ${dateTo}`,
+                      extra: extra.join('; ')
+                    });
+                  });
+                } else {
+                  // Если событий нет, выводим тело без события
+                  rows.push({name: bodyName, type:'—', when:`${dateFrom} → ${dateTo}`, extra:'—'});
+                }
+              });
+            }
+
+            if(!rows.length){
               body.innerHTML = '<tr><td colspan="5" class="text-muted">события не найдены</td></tr>';
               return;
             }
+
             body.innerHTML = rows.slice(0,200).map((r,i)=>`
               <tr>
                 <td>${i+1}</td>
-                <td>${r.name || '—'}</td>
-                <td>${r.type || '—'}</td>
-                <td><code>${r.when || '—'}</code></td>
-                <td>${r.extra || ''}</td>
+                <td>${r.name}</td>
+                <td>${r.type}</td>
+                <td><code>${r.when}</code></td>
+                <td>${r.extra}</td>
               </tr>
             `).join('');
-          }catch(e){
+
+          } catch(e){
             body.innerHTML = '<tr><td colspan="5" class="text-danger">ошибка загрузки</td></tr>';
           }
         }
+
 
         form.addEventListener('submit', ev=>{
           ev.preventDefault();
