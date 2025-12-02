@@ -102,13 +102,13 @@ pub async fn fetch_spacex_next(st: &AppState) -> anyhow::Result<()> {
     CacheRepo::insert(&st.pool, "spacex", json).await
 }
 
-fn last_days(n: i64) -> (String,String) {
+pub fn last_days(n: i64) -> (String,String) {
     let to = Utc::now().date_naive();
     let from = to - chrono::Days::new(n as u64);
     (from.to_string(), to.to_string())
 }
 
-fn s_pick(v: &Value, keys: &[&str]) -> Option<String> {
+pub fn s_pick(v: &Value, keys: &[&str]) -> Option<String> {
     for k in keys {
         if let Some(x) = v.get(*k) {
             if let Some(s) = x.as_str() { if !s.is_empty() { return Some(s.to_string()); } }
@@ -118,7 +118,7 @@ fn s_pick(v: &Value, keys: &[&str]) -> Option<String> {
     None
 }
 
-fn t_pick(v: &Value, keys: &[&str]) -> Option<DateTime<Utc>> {
+pub fn t_pick(v: &Value, keys: &[&str]) -> Option<DateTime<Utc>> {
     for k in keys {
         if let Some(x) = v.get(*k) {
             if let Some(s) = x.as_str() {
@@ -133,3 +133,6 @@ fn t_pick(v: &Value, keys: &[&str]) -> Option<DateTime<Utc>> {
     }
     None
 }
+
+#[cfg(test)]
+mod units;

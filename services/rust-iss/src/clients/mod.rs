@@ -6,4 +6,4 @@ pub mod rate_limiter;
 pub use nasaclient::NasaClient;
 pub use issclient::IssClient;
 pub use spacexclient::SpacexClient;
-pub use rate_limiter::CustomRateLimiter;
+// pub use rate_limiter::CustomRateLimiter;
