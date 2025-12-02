@@ -373,23 +373,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 <div class="card mt-3">
   <div class="card-header fw-semibold">CMS — блоки из БД</div>
   <div class="card-body">
-    @php
-      try {
-          $blocks = DB::select("SELECT title, content FROM cms_blocks WHERE slug='dashboard_experiment' AND is_active = TRUE ORDER BY id ASC");
-
-          if (empty($blocks)) {
-              echo '<div class="text-muted">Блоки не найдены</div>';
-          } else {
-              foreach ($blocks as $b) {
-                  echo '<h5>'.$b->title.'</h5>';
-                  echo $b->content;
-                  echo '<hr>'; // разделитель между блоками
-              }
-          }
-      } catch (\Throwable $e) {
-          echo '<div class="text-danger">Ошибка БД: '.e($e->getMessage()).'</div>';
-      }
-    @endphp
+    @if(empty($cms_blocks))
+      <div class="text-muted">Блоки не найдены</div>
+    @else
+      @foreach($cms_blocks as $block)
+        <h5>{{ $block['title'] }}</h5>
+        {!! $block['content'] !!}
+        <hr>
+      @endforeach
+    @endif
   </div>
 </div>
 
