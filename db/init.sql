@@ -1,4 +1,4 @@
--- Basic schema
+-- ===== Basic schema =====
 
 CREATE TABLE IF NOT EXISTS iss_fetch_log (
     id BIGSERIAL PRIMARY KEY,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS cms_pages (
 
 CREATE TABLE IF NOT EXISTS cms_blocks (
     id BIGSERIAL PRIMARY KEY,
-    slug TEXT UNIQUE NOT NULL,
+    slug TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -32,10 +32,20 @@ CREATE TABLE IF NOT EXISTS cms_blocks (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Seed with deliberately unsafe content for XSS practice
 INSERT INTO cms_pages(slug, title, body)
 VALUES
 ('welcome', 'Добро пожаловать', '<h3>Демо контент</h3><p>Этот текст хранится в БД</p>'),
-('unsafe', 'Небезопасный пример', '<script>console.log("XSS training")
-</script><p>Если вы видите всплывашку значит защита не работает</p>')
+('unsafe', 'Небезопасный пример', '<script>console.log("XSS training")</script><p>Если вы видите всплывашку значит защита не работает</p>')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO cms_blocks (slug, title, content, is_active)
+VALUES 
+('dashboard_experiment', 'Актуальная новость',
+ '<p>Сегодня JWST передал серию снимков галактики NGC 5068. Галерея обновлена!</p>',
+ TRUE),
+('dashboard_experiment', 'Комментарий по МКС',
+ '<p>МКС движется со скоростью около 28 000 км/ч. Графики справа показывают изменения скорости и высоты за последние 4 часа.</p>',
+ TRUE),
+('dashboard_experiment', 'Космическая справка',
+ '<p>Интересный факт: Свет от Солнца до Земли идёт примерно 8 минут 20 секунд.</p>',
+ TRUE);
