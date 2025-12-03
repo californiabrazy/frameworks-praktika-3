@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Support\JwstHelper;
-use App\Repositories\CmsBlockRepository; 
+use App\Http\Support\JwstHelper;
+use App\Http\Repositories\CmsBlockRepository;
+use App\Http\Repositories\TelemetryRepository;
 
 class DashboardController extends Controller
 {
     protected CmsBlockRepository $cmsBlockRepository;
+    protected TelemetryRepository $telemetryRepository;
 
-    public function __construct(CmsBlockRepository $cmsBlockRepository)
+    public function __construct(CmsBlockRepository $cmsBlockRepository, TelemetryRepository $telemetryRepository)
     {
         $this->cmsBlockRepository = $cmsBlockRepository;
+        $this->telemetryRepository = $telemetryRepository;
     }
 
     private function base(): string 
@@ -31,9 +34,9 @@ class DashboardController extends Controller
     {
         $b = $this->base();
         $iss = $this->getJson($b.'/last');
-        $trend = []; 
+        $trend = [];
 
-        $csvData = $this->getCsvDataFromDb();
+        $csvData = $this->telemetryRepository->getCsvData();
 
         $cmsBlocks = $this->cmsBlockRepository->getActiveBlocksBySlug('dashboard_experiment');
 
@@ -43,30 +46,6 @@ class DashboardController extends Controller
             'csv_data' => $csvData,
             'cms_blocks' => $cmsBlocks,
         ]);
-    }
-
-    private function getCsvDataFromDb(): array
-    {
-        try {
-            $records = \DB::connection('db_csv')
-                ->table('telemetry_legacy')
-                ->orderBy('recorded_at', 'desc')
-                ->get();
-
-            $data = [];
-            foreach ($records as $record) {
-                $data[] = [
-                    'recorded_at' => $record->recorded_at,
-                    'voltage' => $record->voltage,
-                    'temp' => $record->temp,
-                    'is_valid' => $record->is_valid ? 'TRUE' : 'FALSE',
-                    'source_file' => $record->source_file,
-                ];
-            }
-            return $data;
-        } catch (\Exception $e) {
-            return [];
-        }
     }
 
     public function jwstFeed(Request $r)

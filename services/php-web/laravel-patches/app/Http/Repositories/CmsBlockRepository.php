@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Http\Repositories;
 
-use App\CmsBlock;
+use App\Http\Models\CmsBlock;
 use Illuminate\Support\Facades\Cache;
 
 class CmsBlockRepository
