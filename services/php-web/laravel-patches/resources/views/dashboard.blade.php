@@ -121,7 +121,7 @@
                       <td>{{ $row['voltage'] }}</td>
                       <td>{{ $row['temp'] }}</td>
                       <td>{{ $row['is_valid'] }}</td>
-                      <td>{{ $row['source_file'] }}</td>
+                      <td><a href="{{ url('/download/csv/' . $row['source_file']) }}" target="_blank">{{ $row['source_file'] }}</a></td>
                     </tr>
                   @endforeach
                 </tbody>

@@ -18,3 +18,6 @@ Route::get("/api/astro/events", [\App\Http\Controllers\AstroController::class, "
 use App\Http\Controllers\AstroController;
 Route::get('/page/{slug}', [\App\Http\Controllers\CmsController::class, 'page']);
 Route::get('/page/{slug}', [\App\Http\Controllers\CmsController::class, 'page']);
+
+// CSV download
+Route::get('/download/csv/{filename}', [\App\Http\Controllers\DashboardController::class, 'downloadCsv']);
