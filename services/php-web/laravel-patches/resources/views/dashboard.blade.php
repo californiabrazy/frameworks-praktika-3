@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       @endforeach
     @endif
   </div>
-</div>
+</div>  
 
 
 <script>

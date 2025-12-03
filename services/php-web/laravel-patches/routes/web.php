@@ -22,3 +22,6 @@ Route::get('/page/{slug}', [\App\Http\Controllers\CmsController::class, 'page'])
 
 // CSV download
 Route::get('/download/csv/{filename}', [\App\Http\Controllers\DashboardController::class, 'downloadCsv']);
+
+// Upload
+Route::post('/upload', [\App\Http\Controllers\UploadController::class, 'store']);
