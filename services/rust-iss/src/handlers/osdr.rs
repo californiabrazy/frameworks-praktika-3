@@ -4,7 +4,7 @@ use axum::{
 };
 use serde_json::Value;
 use crate::config::AppState;
-use crate::domain::ApiError;
+use crate::models::ApiError;
 use crate::repo::OsdrRepo;
 use crate::services;
 

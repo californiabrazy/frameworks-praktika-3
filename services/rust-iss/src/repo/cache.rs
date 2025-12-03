@@ -1,6 +1,6 @@
 use serde_json::Value;
 use sqlx::{PgPool, Row};
-use crate::domain::SpaceCacheItem;
+use crate::models::SpaceCacheItem;
 
 pub struct CacheRepo;
 

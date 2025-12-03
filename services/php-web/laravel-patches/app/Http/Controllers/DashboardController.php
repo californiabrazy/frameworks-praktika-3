@@ -116,4 +116,15 @@ class DashboardController extends Controller
             'items' => $items,
         ]);
     }
+
+    public function downloadCsv($filename)
+    {
+        $path = '/data/csv/' . $filename;
+
+        if (!file_exists($path)) {
+            abort(404, 'File not found');
+        }
+
+        return response()->download($path, $filename);
+    }
 }

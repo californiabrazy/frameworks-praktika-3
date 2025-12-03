@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{PgPool, Row};
 use redis::aio::ConnectionManager;
-use crate::domain::IssData;
+use crate::models::IssData;
 
 pub struct IssRepo;
 
