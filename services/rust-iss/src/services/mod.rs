@@ -5,7 +5,7 @@ use redis::aio::ConnectionManager;
 use crate::clients::{NasaClient, IssClient, SpacexClient};
 use crate::config::AppState;
 use crate::repo::{IssRepo, OsdrRepo, CacheRepo};
-use crate::domain::IssData;
+use crate::models::IssData;
 
 pub async fn fetch_and_store_iss(pool: &PgPool, url: &str, redis: &mut ConnectionManager) -> anyhow::Result<()> {
     let client = IssClient::new();

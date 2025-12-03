@@ -1,10 +1,10 @@
 mod config;
 mod repo;
 mod clients;
-mod domain;
 mod handlers;
 mod services;
 mod routes;
+mod models;
 
 use axum::serve;
 use tokio::net::TcpListener;

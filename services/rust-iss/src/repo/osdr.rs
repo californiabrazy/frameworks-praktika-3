@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{PgPool, Row};
-use crate::domain::OsdrItem;
+use crate::models::OsdrItem;
 
 pub struct OsdrRepo;
 

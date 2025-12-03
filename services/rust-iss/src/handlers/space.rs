@@ -5,7 +5,7 @@ use axum::{
 use serde_json::Value;
 use std::collections::HashMap;
 use crate::config::AppState;
-use crate::domain::{ApiError, SpaceSummary};
+use crate::models::{ApiError, SpaceSummary};
 use crate::repo::{IssRepo, CacheRepo};
 use crate::services;
 
