@@ -2,7 +2,7 @@
 
 namespace App\Http\Services;
 
-use App\Http\Support\JwstHelper;
+use App\Http\Clients\JwstClient;
 use App\Http\Repositories\CmsBlockRepository;
 use App\Http\Repositories\TelemetryRepository;
 use Illuminate\Http\Request;
@@ -11,13 +11,13 @@ class DashboardService
 {
     protected CmsBlockRepository $cmsBlockRepository;
     protected TelemetryRepository $telemetryRepository;
-    protected JwstHelper $jwstHelper;
+    protected JwstClient $jwstClient;
 
-    public function __construct(CmsBlockRepository $cmsBlockRepository, TelemetryRepository $telemetryRepository, JwstHelper $jwstHelper)
+    public function __construct(CmsBlockRepository $cmsBlockRepository, TelemetryRepository $telemetryRepository, JwstClient $jwstClient)
     {
         $this->cmsBlockRepository = $cmsBlockRepository;
         $this->telemetryRepository = $telemetryRepository;
-        $this->jwstHelper = $jwstHelper;
+        $this->jwstClient = $jwstClient;
     }
 
     private function base(): string
@@ -63,7 +63,7 @@ class DashboardService
         if ($src === 'suffix' && $sfx !== '') $path = 'all/suffix/'.ltrim($sfx,'/');
         if ($src === 'program' && $prog !== '') $path = 'program/id/'.rawurlencode($prog);
 
-        $resp = $this->jwstHelper->get($path, ['page'=>$page, 'perPage'=>$per]);
+        $resp = $this->jwstClient->get($path, ['page'=>$page, 'perPage'=>$per]);
         $list = $resp['body'] ?? ($resp['data'] ?? (is_array($resp) ? $resp : []));
 
         $items = [];
