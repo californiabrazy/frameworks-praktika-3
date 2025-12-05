@@ -3,6 +3,7 @@
 namespace App\Http\Repositories;
 
 use App\Http\Models\CmsBlock;
+use App\Http\Support\XssHelper;
 use Illuminate\Support\Facades\Cache;
 
 class CmsBlockRepository
@@ -19,11 +20,18 @@ class CmsBlockRepository
         $cacheKey = "cms_blocks_{$slug}";
 
         return Cache::remember($cacheKey, 3600, function () use ($slug) {
-            return $this->model->where('slug', $slug)
+            $blocks = $this->model->where('slug', $slug)
                 ->where('is_active', true)
                 ->orderBy('id', 'asc')
                 ->get(['title', 'content'])
                 ->toArray();
+
+            // Sanitize content to prevent XSS
+            foreach ($blocks as &$block) {
+                $block['content'] = XssHelper::sanitize($block['content']);
+            }
+
+            return $blocks;
         });
     }
 }
