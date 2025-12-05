@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{Query, State},
     Json,
 };
 use serde_json::{json, Value};
@@ -30,16 +30,45 @@ pub async fn trigger_iss(State(st): State<AppState>) -> Result<Json<Value>, ApiE
     last_iss(State(st)).await
 }
 
-pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, ApiError> {
+#[derive(serde::Deserialize)]
+pub struct TrendQuery {
+    limit: Option<usize>,
+}
+
+pub async fn iss_trend(
+    Query(query): Query<TrendQuery>,
+    State(st): State<AppState>,
+) -> Result<Json<Value>, ApiError> {
+    if let Some(limit) = query.limit {
+        if limit > 2 {
+            // Return points for trajectory
+            let rows = IssRepo::get_last_n_for_trend(&st.pool, limit).await
+                .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+
+            let points: Vec<Value> = rows.into_iter().rev().map(|(at, payload)| {
+                json!({
+                    "lat": payload["latitude"],
+                    "lon": payload["longitude"],
+                    "at": at.to_rfc3339(),
+                    "velocity": payload["velocity"],
+                    "altitude": payload["altitude"]
+                })
+            }).collect();
+
+            return Ok(Json(json!({ "points": points })));
+        }
+    }
+
+    // Default: return Trend struct for last two points
     let rows = IssRepo::get_last_two_for_trend(&st.pool).await
         .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
     if rows.len() < 2 {
-        return Ok(Json(Trend {
+        return Ok(Json(json!(Trend {
             movement: false, delta_km: 0.0, dt_sec: 0.0, velocity_kmh: None,
             from_time: None, to_time: None,
             from_lat: None, from_lon: None, to_lat: None, to_lon: None
-        }));
+        })));
     }
 
     let t2 = rows[0].0;
@@ -61,7 +90,7 @@ pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, ApiErr
     }
     let dt_sec = (t2 - t1).num_milliseconds() as f64 / 1000.0;
 
-    Ok(Json(Trend {
+    Ok(Json(json!(Trend {
         movement,
         delta_km,
         dt_sec,
@@ -69,7 +98,7 @@ pub async fn iss_trend(State(st): State<AppState>) -> Result<Json<Trend>, ApiErr
         from_time: Some(t1),
         to_time: Some(t2),
         from_lat: lat1, from_lon: lon1, to_lat: lat2, to_lon: lon2,
-    }))
+    })))
 }
 
 pub fn num(v: &Value) -> Option<f64> {

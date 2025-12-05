@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support;
+namespace App\Http\Clients;
 
-final class JwstHelper
+class JwstClient
 {
     private string $host;
     private string $key;
