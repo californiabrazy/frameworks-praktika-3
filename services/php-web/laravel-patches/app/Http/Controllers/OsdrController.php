@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Services\OsdrService;
+use App\Http\DTO\OsdrItemDto;
 
 class OsdrController extends Controller
 {
@@ -25,8 +26,10 @@ class OsdrController extends Controller
 
         $items = $this->osdrService->flattenOsdr($items); // ключевая строка
 
+        $itemsDto = array_map(fn($item) => new OsdrItemDto($item), $items);
+
         return view('osdr', [
-            'items' => $items,
+            'items' => array_map(fn($dto) => $dto->toArray(), $itemsDto),
             'src'   => $base.'/osdr/list?limit='.$limit,
         ]);
     }

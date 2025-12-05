@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\DTO\IssLastDto;
+use App\Http\DTO\IssTrendDto;
+
 class IssController extends Controller
 {
     public function index()
@@ -14,6 +17,9 @@ class IssController extends Controller
         $lastJson  = $last  ? json_decode($last,  true) : [];
         $trendJson = $trend ? json_decode($trend, true) : [];
 
-        return view('iss', ['last' => $lastJson, 'trend' => $trendJson, 'base' => $base]);
+        $lastDto  = new IssLastDto($lastJson);
+        $trendDto = new IssTrendDto($trendJson);
+
+        return view('iss', ['last' => $lastDto->toArray(), 'trend' => $trendDto->toArray(), 'base' => $base]);
     }
 }
