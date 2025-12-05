@@ -55,6 +55,14 @@ impl IssRepo {
         Ok(rows.into_iter().map(|r| (r.get("fetched_at"), r.get("payload"))).collect())
     }
 
+    pub async fn get_last_n_for_trend(pool: &PgPool, n: usize) -> anyhow::Result<Vec<(DateTime<Utc>, Value)>> {
+        let rows = sqlx::query("SELECT fetched_at, payload FROM iss_fetch_log ORDER BY id DESC LIMIT $1")
+            .bind(n as i32)
+            .fetch_all(pool).await?;
+
+        Ok(rows.into_iter().map(|r| (r.get("fetched_at"), r.get("payload"))).collect())
+    }
+
     pub async fn insert(pool: &PgPool, source_url: &str, payload: Value) -> anyhow::Result<()> {
         sqlx::query("INSERT INTO iss_fetch_log (source_url, payload) VALUES ($1, $2)")
             .bind(source_url)
