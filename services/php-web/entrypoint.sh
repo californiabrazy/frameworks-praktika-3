@@ -22,6 +22,10 @@ fi
 if [ -d "$PATCH_DIR" ] && [ "$(ls -A "$PATCH_DIR")" ]; then
     echo "[php] applying patches from $PATCH_DIR"
     rsync -av --no-perms --no-owner --no-group "$PATCH_DIR/" "$APP_DIR/"
+
+    # Устанавливаем зависимости после применения патчей
+    echo "[php] installing composer dependencies"
+    composer install --no-dev --optimize-autoloader
 fi
 
 # Создаём необходимые директории и файл логов
