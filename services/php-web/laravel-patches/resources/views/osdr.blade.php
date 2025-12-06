@@ -1,99 +1,134 @@
+{{-- resources/views/osdr.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
 <div class="container py-5">
-  <!-- Заголовок по центру -->
-  <h3 class="text-center mb-4">NASA OSDR</h3>
+    <h3 class="text-center mb-4">NASA OSDR</h3>
 
-  <div class="card shadow">
-    <div class="card-body p-4">
+    <div class="card shadow">
+        <div class="card-body p-4">
 
-      <!-- Форма поиска -->
-      <form method="GET" class="mb-4">
-        <div class="row g-3 justify-content-start">
-          <div class="col-lg-4 col-md-8">
-            <input type="text"
-                   name="search"
-                   class="form-control"
-                   placeholder="Поиск по названию датасета..."
-                   value="{{ request('search') }}"
-                   autofocus>
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <button type="submit" class="btn btn-primary w-85">Найти</button>
-          </div>
-          @if(request('search'))
-            <div class="col-lg-2 col-md-4">
-              <a href="{{ request()->url() }}" class="btn btn-outline-secondary w-100">Очистить</a>
+            <!-- Форма поиска -->
+            <form method="GET" class="mb-4">
+                <div class="row g-3 justify-content-start">
+                    <div class="col-lg-4 col-md-8">
+                        <input type="text"
+                               name="search"
+                               class="form-control"
+                               placeholder="Поиск по названию датасета..."
+                               value="{{ request('search') }}"
+                               autofocus>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Найти</button>
+                    </div>
+                    @if(request('search'))
+                        <div class="col-lg-2 col-md-4">
+                            <a href="{{ request()->url() }}" class="btn btn-outline-secondary w-100">Очистить</a>
+                        </div>
+                    @endif
+                </div>
+            </form>
+
+            <!-- Таблица -->
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">#</th>
+                            <th width="120">ID датасета</th>
+                            <th width="120">Название датасета</th>
+                            <th width="110">Время добавления</th>
+                            <th width="70" class="text-center">JSON</th>
+                            <th width="200">RAW</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($items as $row)
+                            <tr>
+                                <td class="text-center text-muted small">{{ $loop->iteration + $items->firstItem() - 1 }}</td>
+                                <td class="font-monospace small text-muted">
+                                    {{ Str::limit($row['dataset_id'] ?? '—', 18) }}
+                                </td>
+                                <td style="max-width: 560px;">
+                                    <div class="text-truncate" title="{{ $row['title'] ?? '' }}">
+                                        {{ $row['title'] ?? '—' }}
+                                    </div>
+                                </td>
+                                <td class="small text-muted">{{ $row['inserted_at'] ?? '—' }}</td>
+                                <td class="text-center">
+                                    @if(!empty($row['rest_url']))
+                                        <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener"
+                                           class="btn btn-outline-secondary btn-sm">JSON</a>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td class="small text-muted" style="max-width: 200px;">
+                                    <div class="text-truncate" title="{{ json_encode($row['raw'] ?? []) }}">
+                                        {{ json_encode($row['raw'] ?? []) }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    @if(request('search'))
+                                        Ничего не найдено по запросу «{{ request('search') }}»
+                                    @else
+                                        Нет данных
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-          @endif
+
+            <!-- Минималистичная пагинация: только Previous / Next + инфо о количестве -->
+            @if ($items->hasPages() || $items->total() > 0)
+                <nav class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <!-- Showing X to Y of Z results -->
+                        <div class="text-muted small">
+                            @if($items->total() === 0)
+                                Нет записей
+                            @else
+                                Showing
+                                <strong>{{ $items->firstItem() }}</strong>
+                                to
+                                <strong>{{ $items->lastItem() }}</strong>
+                                of
+                                <strong>{{ $items->total() }}</strong>
+                                results
+                            @endif
+                        </div>
+
+                        <!-- Previous / Next -->
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link"
+                                   href="{{ $items->previousPageUrl() }}"
+                                   @if($items->onFirstPage()) tabindex="-1" aria-disabled="true" @endif
+                                   rel="prev">
+                                    Previous
+                                </a>
+                            </li>
+
+                            <li class="page-item {{ !$items->hasMorePages() ? 'disabled' : '' }}">
+                                <a class="page-link"
+                                   href="{{ $items->nextPageUrl() }}"
+                                   @if(!$items->hasMorePages()) tabindex="-1" aria-disabled="true" @endif
+                                   rel="next">
+                                    Next
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            @endif
+
         </div>
-      </form>
-
-      <!-- Таблица -->
-      <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th width="60" class="text-center">#</th>
-              <th width="60">ID датасета</th>
-              <th width="120">Название датасета</th>
-              <th width="110">Время обновления</th>
-              <th width="110">Время добавления</th>
-              <th width="100" class="text-center">JSON</th>
-              <th width="200">RAW</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($items as $row)
-              <tr>
-                <td class="text-center text-muted small">{{ $row['id'] ?? '—' }}</td>
-                <td class="font-monospace small text-muted">{{ Str::limit($row['dataset_id'] ?? '—', 18) }}</td>
-                <td style="max-width: 560px;">
-                  <div class="text-truncate" title="{{ $row['title'] ?? '' }}">
-                    {{ $row['title'] ?? '—' }}
-                  </div>
-                </td>
-                <td class="small text-muted">{{ $row['updated_at'] ?? '—' }}</td>
-                <td class="small text-muted">{{ $row['inserted_at'] ?? '—' }}</td>
-                <td class="text-center">
-                  @if(!empty($row['rest_url']))
-                    <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
-                      JSON
-                    </a>
-                  @else
-                    <span class="text-muted">—</span>
-                  @endif
-                </td>
-                <td class="small text-muted" style="max-width: 200px;">
-                  <div class="text-truncate" title="{{ json_encode($row['raw']) }}">
-                    {{ json_encode($row['raw']) }}
-                  </div>
-                </td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="7" class="text-center text-muted py-5">
-                  @if(request('search'))
-                    Ничего не найдено по запросу «{{ request('search') }}»
-                  @else
-                    Нет данных
-                  @endif
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Пагинация -->
-      @if(is_object($items) && method_exists($items, 'links'))
-        <div class="mt-4 d-flex justify-content-center">
-          {{ $items->appends(['search' => request('search')])->links() }}
-        </div>
-      @endif
-
     </div>
-  </div>
 </div>
 @endsection
