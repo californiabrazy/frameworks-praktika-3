@@ -1,4 +1,4 @@
-@extends('layouts.app')
+- @extends('layouts.app')
 
 @section('content')
 <div class="container pb-5">
@@ -266,6 +266,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             </table>
           </div>
 
+          <style>
+            #astroBody code { color: black; }
+          </style>
+
           <details class="mt-2">
             <summary>Полный JSON</summary>
             <pre id="astroRaw" class="bg-light rounded p-2 small m-0" style="white-space:pre-wrap"></pre>
@@ -301,6 +305,22 @@ document.addEventListener('DOMContentLoaded', async function () {
           return rows;
         }
 
+        function translateType(type) {
+          const translations = {
+            'Rise': 'Восход',
+            'Set': 'Заход',
+          };
+          return translations[type] || type;
+        }
+
+        function translateBody(body) {
+          const translations = {
+            'Sun': 'Солнце',
+            'Moon': 'Луна',
+          };
+          return translations[body] || body;
+        }
+
         async function load(q){
           body.innerHTML = '<tr><td colspan="5" class="text-muted">Загрузка…</td></tr>';
           const url = '/api/astro/events?' + new URLSearchParams(q).toString();
@@ -314,27 +334,23 @@ document.addEventListener('DOMContentLoaded', async function () {
               const dateFrom = js.data.dates?.from || '—';
               const dateTo   = js.data.dates?.to || '—';
               js.data.rows.forEach(rw => {
-                const bodyName = rw.body?.name || rw.body?.id || '—';
+                const bodyName = translateBody(rw.body?.name || rw.body?.id) || '—';
                 if(Array.isArray(rw.events) && rw.events.length){
                   rw.events.forEach(ev => {
-                    // формируем строку "Дополнительно"
-                    let extra = [];
-                    // if(ev.extraInfo) extra.push('Obscuration: '+(ev.extraInfo.obscuration ?? '—'));
-                    // if(ev.eventHighlights?.partialStart?.date) extra.push('Partial start: '+ev.eventHighlights.partialStart.date);
-                    if(ev.eventHighlights?.peak?.date) extra.push('Peak: '+ev.eventHighlights.peak.date);
-                    // if(ev.eventHighlights?.partialEnd?.date) extra.push('Partial end: '+ev.eventHighlights.partialEnd.date);
-                    
+                    const riseTime = ev.rise ? new Date(ev.rise).toLocaleString('ru-RU', { timeZone: 'UTC' }) : '—';
+                    const setTime = ev.set ? new Date(ev.set).toLocaleString('ru-RU', { timeZone: 'UTC' }) : '—';
                     rows.push({
                       name: bodyName,
-                      type: ev.type || '—',
-                      when: `${dateFrom} → ${dateTo}`,
-                      extra: extra.join('; ')
+                      type: translateType(ev.type) || '—',
+                      when: `Восход: ${riseTime}; Заход: ${setTime}`,
+                      extra: ev.extraInfo ? Object.entries(ev.extraInfo).map(([k,v])=>{
+                        let translatedK = k === 'obscuration' ? 'Затмение' : k;
+                        return `${translatedK}: ${v}`;
+                      }).join('; ') : '—'
                     });
                   });
-                } else {
-                  // Если событий нет, выводим тело без события
-                  rows.push({name: bodyName, type:'—', when:`${dateFrom} → ${dateTo}`, extra:'—'});
                 }
+                // Пропускаем тела без событий
               });
             }
 
