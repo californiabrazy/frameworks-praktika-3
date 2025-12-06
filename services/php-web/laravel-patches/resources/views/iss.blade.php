@@ -45,5 +45,65 @@
       </div>
     </div>
   </div>
+
+  {{-- МКС — положение и движение --}}
+  <div class="row g-3 mt-3">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">МКС — положение и движение</h5>
+          <div id="map" class="rounded mb-2 border" style="height:300px"></div>
+          <div class="row g-2">
+            <div class="col-6"><canvas id="issSpeedChart" height="110"></canvas></div>
+            <div class="col-6"><canvas id="issAltChart"   height="110"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  // ====== карта и графики МКС ======
+  if (typeof L !== 'undefined' && typeof Chart !== 'undefined') {
+    const last = @json(($last['payload'] ?? []));
+    let lat0 = Number(last.latitude || 0), lon0 = Number(last.longitude || 0);
+    const map = L.map('map', { attributionControl:false }).setView([lat0||0, lon0||0], lat0?3:2);
+    L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', { noWrap:true }).addTo(map);
+    const trail  = L.polyline([], {weight:3}).addTo(map);
+    const marker = L.marker([lat0||0, lon0||0]).addTo(map).bindPopup('МКС');
+
+    const speedChart = new Chart(document.getElementById('issSpeedChart'), {
+      type: 'line', data: { labels: [], datasets: [{ label: 'Скорость', data: [] }] },
+      options: { responsive: true, scales: { x: { display: false } } }
+    });
+    const altChart = new Chart(document.getElementById('issAltChart'), {
+      type: 'line', data: { labels: [], datasets: [{ label: 'Высота', data: [] }] },
+      options: { responsive: true, scales: { x: { display: false } } }
+    });
+
+    async function loadTrend() {
+      try {
+        const r = await fetch('/api/iss/trend?limit=240');
+        const js = await r.json();
+        const pts = Array.isArray(js.points) ? js.points.map(p => [p.lat, p.lon]) : [];
+        if (pts.length) {
+          trail.setLatLngs(pts);
+          marker.setLatLng(pts[pts.length-1]);
+        }
+        const t = (js.points||[]).map(p => new Date(p.at).toLocaleTimeString());
+        speedChart.data.labels = t;
+        speedChart.data.datasets[0].data = (js.points||[]).map(p => p.velocity);
+        speedChart.update();
+        altChart.data.labels = t;
+        altChart.data.datasets[0].data = (js.points||[]).map(p => p.altitude);
+        altChart.update();
+      } catch(e) {}
+    }
+    loadTrend();
+    setInterval(loadTrend, 15000);
+  }
+});
+</script>
 @endsection
