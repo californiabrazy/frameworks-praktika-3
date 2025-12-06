@@ -49,7 +49,7 @@
                 <span>Скорость:</span>
                 <strong>{{ $last['payload']['velocity'] ?? '—' }} км/ч</strong>
               </li>
-              <li class="list-group-item d-flex justify-content-between text-muted small">
+              <li class="list-group-item d-flex justify-content-between">
                 <span>Время:</span>
                 <span>{{ $last['fetched_at'] ?? '—' }}</span>
               </li>

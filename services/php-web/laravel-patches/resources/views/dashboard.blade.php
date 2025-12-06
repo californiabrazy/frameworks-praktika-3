@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead>
-                <tr><th>#</th><th>Тело</th><th>Событие</th><th>Когда (UTC)</th><th>Дополнительно</th></tr>
+                <tr><th>#</th><th>Тело</th><th>Событие</th><th>Время события</th><th>Дополнительная информация</th></tr>
               </thead>
               <tbody id="astroBody">
                 <tr><td colspan="5" class="text-muted">нет данных</td></tr>

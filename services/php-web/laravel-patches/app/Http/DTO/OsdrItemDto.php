@@ -10,6 +10,7 @@ class OsdrItemDto
     public ?string $status;
     public ?string $updated_at;
     public ?string $inserted_at;
+    public ?string $rest_url;
     public ?array $raw;
 
     public function __construct(array $data)
@@ -20,6 +21,7 @@ class OsdrItemDto
         $this->status = $data['status'] ?? null;
         $this->updated_at = $data['updated_at'] ?? null;
         $this->inserted_at = $data['inserted_at'] ?? null;
+        $this->rest_url = $data['rest_url'] ?? null;
         $this->raw = $data['raw'] ?? null;
     }
 
@@ -32,6 +34,7 @@ class OsdrItemDto
             'status' => $this->status,
             'updated_at' => $this->updated_at,
             'inserted_at' => $this->inserted_at,
+            'rest_url' => $this->rest_url,
             'raw' => $this->raw,
         ];
     }

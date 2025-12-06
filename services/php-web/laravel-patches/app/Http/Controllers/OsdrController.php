@@ -17,14 +17,14 @@ class OsdrController extends Controller
 
     public function index(Request $request)
     {
-        $limit = $request->query('limit', '20'); // учебная нестрогая валидация
+        $limit = $request->query('limit', '1000'); 
         $base  = getenv('RUST_BASE') ?: 'http://rust_iss:3000';
 
         $json  = @file_get_contents($base.'/osdr/list?limit='.$limit);
         $data  = $json ? json_decode($json, true) : ['items' => []];
         $items = $data['items'] ?? [];
 
-        $items = $this->osdrService->flattenOsdr($items); // ключевая строка
+        $items = $this->osdrService->flattenOsdr($items); 
 
         $itemsDto = array_map(fn($item) => new OsdrItemDto($item), $items);
 

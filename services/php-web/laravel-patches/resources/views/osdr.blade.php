@@ -2,13 +2,13 @@
 
 @section('content')
 <div class="container py-5">
-  <!-- Заголовок по центру, как на странице МКС -->
+  <!-- Заголовок по центру -->
   <h3 class="text-center mb-4">NASA OSDR</h3>
 
   <div class="card shadow">
     <div class="card-body p-4">
 
-      <!-- Поиск — нормальный размер (не огромный) -->
+      <!-- Форма поиска -->
       <form method="GET" class="mb-4">
         <div class="row g-3 justify-content-start">
           <div class="col-lg-4 col-md-8">
@@ -20,7 +20,7 @@
                    autofocus>
           </div>
           <div class="col-lg-2 col-md-4">
-            <button type="submit" class="btn btn-primary w-100">Найти</button>
+            <button type="submit" class="btn btn-primary w-85">Найти</button>
           </div>
           @if(request('search'))
             <div class="col-lg-2 col-md-4">
@@ -30,58 +30,45 @@
         </div>
       </form>
 
-      <!-- Таблица — единый чистый стиль для всех строк -->
+      <!-- Таблица -->
       <div class="table-responsive">
         <table class="table table-sm table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th width="60" class="text-center">#</th>
-              <th width="140">Dataset ID</th>
-              <th>Название датасета</th>
-              <th width="100">REST URL</th>
-              <th width="110">Updated</th>
-              <th width="110">Inserted</th>
-              <th width="80" class="text-center">JSON</th>
+              <th width="60">ID датасета</th>
+              <th width="120">Название датасета</th>
+              <th width="110">Время обновления</th>
+              <th width="110">Время добавления</th>
+              <th width="100" class="text-center">JSON</th>
+              <th width="200">RAW</th>
             </tr>
           </thead>
           <tbody>
             @forelse($items as $row)
               <tr>
-                <td class="text-center text-muted small fw-medium">{{ $loop->iteration }}</td>
-                <td class="font-monospace small text-muted">
-                  {{ Str::limit($row['dataset_id'] ?? '—', 18) }}
-                </td>
+                <td class="text-center text-muted small">{{ $row['id'] ?? '—' }}</td>
+                <td class="font-monospace small text-muted">{{ Str::limit($row['dataset_id'] ?? '—', 18) }}</td>
                 <td style="max-width: 560px;">
                   <div class="text-truncate" title="{{ $row['title'] ?? '' }}">
                     {{ $row['title'] ?? '—' }}
                   </div>
                 </td>
-                <td>
-                  @if(!empty($row['rest_url']))
-                    <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener"
-                       class="btn btn-outline-primary btn-sm px-3">
-                      открыть
-                    </a>
-                  @else
-                    <span class="text-muted small">—</span>
-                  @endif
-                </td>
                 <td class="small text-muted">{{ $row['updated_at'] ?? '—' }}</td>
                 <td class="small text-muted">{{ $row['inserted_at'] ?? '—' }}</td>
                 <td class="text-center">
-                  <button class="btn btn-outline-secondary btn-sm"
-                          data-bs-toggle="collapse"
-                          data-bs-target="#raw-{{ $row['id'] }}-{{ md5($row['dataset_id'] ?? (string)$row['id']) }}">
-                    JSON
-                  </button>
+                  @if(!empty($row['rest_url']))
+                    <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+                      JSON
+                    </a>
+                  @else
+                    <span class="text-muted">—</span>
+                  @endif
                 </td>
-              </tr>
-
-              <!-- Раскрывающийся JSON — такой же, как был у тебя изначально и всегда работал -->
-              <tr class="collapse bg-light" id="raw-{{ $row['id'] }}-{{ md5($row['dataset_id'] ?? (string)$row['id']) }}">
-                <td colspan="7" class="p-0 border-0">
-                  <pre class="mb-0 p-3 rounded-bottom" style="max-height: 360px; overflow: auto; font-size: 0.84rem; background: #f8f9fa; border: none;">
-{{ json_encode($row['raw'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                <td class="small text-muted" style="max-width: 200px;">
+                  <div class="text-truncate" title="{{ json_encode($row['raw']) }}">
+                    {{ json_encode($row['raw']) }}
+                  </div>
                 </td>
               </tr>
             @empty
@@ -99,7 +86,7 @@
         </table>
       </div>
 
-      <!-- Пагинация — безопасная, без ошибок -->
+      <!-- Пагинация -->
       @if(is_object($items) && method_exists($items, 'links'))
         <div class="mt-4 d-flex justify-content-center">
           {{ $items->appends(['search' => request('search')])->links() }}
