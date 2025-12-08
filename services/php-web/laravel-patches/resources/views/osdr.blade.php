@@ -33,7 +33,7 @@
             <!-- Таблица -->
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0">
-                    <thead class="table-light">
+                    <thead class="">
                         <tr>
                             <th width="60" class="text-center">#</th>
                             <th width="120">ID датасета</th>
@@ -45,21 +45,40 @@
                     </thead>
                     <tbody>
                         @forelse($items as $row)
-                            <tr>
+                            @php
+                                $search = trim(request('search'));
+                                $title  = $row['title'] ?? '';
+                                $datasetId = $row['dataset_id'] ?? '';
+
+                                $isMatch = $search && (
+                                    strcasecmp(trim($title), trim($search)) === 0 ||
+                                    strcasecmp(trim($datasetId), trim($search)) === 0
+                                )
+                            @endphp
+
+                            <tr class="{{ $isMatch ? 'table-primary bg-primary-subtle' : '' }}">
                                 <td class="text-center text-muted small">{{ $loop->iteration + $items->firstItem() - 1 }}</td>
                                 <td class="font-monospace small text-muted">
-                                    {{ Str::limit($row['dataset_id'] ?? '—', 18) }}
+                                    {{ Str::limit($datasetId, 18) }}
                                 </td>
                                 <td style="max-width: 560px;">
-                                    <div class="text-truncate" title="{{ $row['title'] ?? '' }}">
-                                        {{ $row['title'] ?? '—' }}
+                                    <div class="text-truncate" title="{{ $title }}">
+                                        @if($search && $title)
+                                            {!! preg_replace(
+                                                '/^' . preg_quote($search, '/') . '$/i',
+                                                '<mark class="bg-primary-subtle">$0</mark>',
+                                                e($title)
+                                            ) !!}
+                                        @else
+                                            {{ $title ?: '—' }}
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="small text-muted">{{ $row['inserted_at'] ?? '—' }}</td>
                                 <td class="text-center">
                                     @if(!empty($row['rest_url']))
                                         <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener"
-                                           class="btn btn-outline-secondary btn-sm">JSON</a>
+                                        class="btn btn-outline-secondary btn-sm">JSON</a>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
@@ -94,13 +113,13 @@
                             @if($items->total() === 0)
                                 Нет записей
                             @else
-                                Showing
+                                Показаны с
                                 <strong>{{ $items->firstItem() }}</strong>
-                                to
+                                по
                                 <strong>{{ $items->lastItem() }}</strong>
-                                of
+                                из
                                 <strong>{{ $items->total() }}</strong>
-                                results
+                                результатов
                             @endif
                         </div>
 
@@ -111,7 +130,7 @@
                                    href="{{ $items->previousPageUrl() }}"
                                    @if($items->onFirstPage()) tabindex="-1" aria-disabled="true" @endif
                                    rel="prev">
-                                    Previous
+                                    Предыдущая
                                 </a>
                             </li>
 
@@ -120,7 +139,7 @@
                                    href="{{ $items->nextPageUrl() }}"
                                    @if(!$items->hasMorePages()) tabindex="-1" aria-disabled="true" @endif
                                    rel="next">
-                                    Next
+                                    Следующая
                                 </a>
                             </li>
                         </ul>

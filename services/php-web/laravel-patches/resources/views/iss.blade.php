@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4">
+<div class="container py-5">
   <h3 class="mb-4 text-center">МКС (ISS) — текущее положение и движение</h3>
 
   {{-- КОМПАКТНЫЙ БЛОК: КАРТА + ГРАФИКИ (стал заметно меньше) --}}
@@ -14,9 +14,11 @@
           
           <div class="row g-3">
             <div class="col-md-6">
+              <p>Скорость:</p>
               <canvas id="issSpeedChart" height="100"></canvas>
             </div>
             <div class="col-md-6">
+              <p>Высота:</p>
               <canvas id="issAltChart" height="100"></canvas>
             </div>
           </div>

@@ -18,40 +18,37 @@ class OsdrController extends Controller
 
     public function index(Request $request)
     {
-        $limit = $request->query('limit', '1000');
-        $base  = getenv('RUST_BASE') ?: 'http://rust_iss:3000';
+        $limit  = $request->query('limit', '1000');
+        $search = $request->query('search', '');
+        $base   = getenv('RUST_BASE') ?: 'http://rust_iss:3000';
 
-        $json  = @file_get_contents($base.'/osdr/list?limit='.$limit);
-        $data  = $json ? json_decode($json, true) : ['items' => []];
+        $url = $base . '/osdr/list?limit=' . $limit;
+        if ($search !== '') {
+            $url .= '&search=' . urlencode($search);
+        }
+
+        $json = @file_get_contents($url);
+        $data = $json ? json_decode($json, true) : ['items' => []];
         $items = $data['items'] ?? [];
 
         $items = $this->osdrService->flattenOsdr($items);
-
         $itemsDto = array_map(fn($item) => new OsdrItemDto($item), $items);
         $itemsArray = array_map(fn($dto) => $dto->toArray(), $itemsDto);
 
-        // Filter by search if provided
-        if ($search = $request->query('search')) {
-            $itemsArray = array_filter($itemsArray, fn($item) => stripos($item['title'] ?? '', $search) !== false);
-        }
-
-        // Paginate with 15 records per page
+        // Теперь пагинация работает по уже отфильтрованным данным
         $perPage = 15;
-        $currentPage = $request->query('page', 1);
-        $total = count($itemsArray);
-        $offset = ($currentPage - 1) * $perPage;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $paginatedItems = new LengthAwarePaginator(
-            array_slice($itemsArray, $offset, $perPage),
-            $total,
+            array_slice($itemsArray, ($currentPage - 1) * $perPage, $perPage),
+            count($itemsArray),
             $perPage,
             $currentPage,
-            ['path' => $request->url(), 'pageName' => 'page']
+            ['path' => $request->url(), 'query' => $request->query()]
         );
-        $paginatedItems->appends($request->query());
 
         return view('osdr', [
             'items' => $paginatedItems,
-            'src'   => $base.'/osdr/list?limit='.$limit,
+            'src'   => $url,
         ]);
     }
 }
