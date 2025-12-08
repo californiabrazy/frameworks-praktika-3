@@ -20,6 +20,8 @@ class OsdrController extends Controller
     {
         $limit  = $request->query('limit', '1000');
         $search = $request->query('search', '');
+        $sort_by = $request->query('sort_by', 'inserted_at');
+        $sort_order = $request->query('sort_order', 'desc');
         $base   = getenv('RUST_BASE') ?: 'http://rust_iss:3000';
 
         $url = $base . '/osdr/list?limit=' . $limit;
@@ -35,7 +37,33 @@ class OsdrController extends Controller
         $itemsDto = array_map(fn($item) => new OsdrItemDto($item), $items);
         $itemsArray = array_map(fn($dto) => $dto->toArray(), $itemsDto);
 
-        // Теперь пагинация работает по уже отфильтрованным данным
+        // Фильтрация по поиску
+        if ($search !== '') {
+            $itemsArray = array_filter($itemsArray, function($item) use ($search) {
+                $title = $item['title'] ?? '';
+                $datasetId = $item['dataset_id'] ?? '';
+                return stripos($title, $search) !== false || stripos($datasetId, $search) !== false;
+            });
+        }
+
+        // Сортировка
+        usort($itemsArray, function($a, $b) use ($sort_by, $sort_order) {
+            $valA = $a[$sort_by] ?? '';
+            $valB = $b[$sort_by] ?? '';
+
+            if ($sort_by === 'inserted_at') {
+                $valA = strtotime($valA);
+                $valB = strtotime($valB);
+            }
+
+            if ($sort_order === 'asc') {
+                return $valA <=> $valB;
+            } else {
+                return $valB <=> $valA;
+            }
+        });
+
+        // Теперь пагинация работает по уже отфильтрованным и отсортированным данным
         $perPage = 15;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $paginatedItems = new LengthAwarePaginator(
@@ -49,6 +77,8 @@ class OsdrController extends Controller
         return view('osdr', [
             'items' => $paginatedItems,
             'src'   => $url,
+            'sort_by' => $sort_by,
+            'sort_order' => $sort_order,
         ]);
     }
 }

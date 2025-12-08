@@ -342,121 +342,135 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // === JWST галерея + детальная карточка ===
+// === JWST галерея + детальная карточка — ЧИСТАЯ ВЕРСИЯ ===
 document.addEventListener('DOMContentLoaded', function () {
-    const track        = document.getElementById('jwstTrack');
-    const info         = document.getElementById('jwstInfo');
-    const form         = document.getElementById('jwstFilter');
-    const srcSel       = document.getElementById('srcSel');
-    const sfxInp       = document.getElementById('suffixInp');
-    const progInp      = document.getElementById('progInp');
+    const track         = document.getElementById('jwstTrack');
+    const info          = document.getElementById('jwstInfo');
+    const detailCard    = document.getElementById('jwstDetailCard');
+    const detailContent = document.getElementById('detailContent');
+    const closeBtn      = document.getElementById('closeDetail');
 
-    const detailCard   = document.getElementById('jwstDetailCard');
-    const detailContent= document.getElementById('detailContent');
-    const closeBtn     = document.getElementById('closeDetail');
-
-    // Показ/скрытие полей фильтра
-    function toggleInputs(){
-        sfxInp.style.display  = srcSel.value === 'suffix'  ? '' : 'none';
-        progInp.style.display = srcSel.value === 'program' ? '' : 'none';
-    }
-    srcSel.addEventListener('change', toggleInputs);
-    toggleInputs();
-
-    // Закрытие детального блока
     closeBtn.addEventListener('click', () => {
         detailCard.style.opacity = '0';
         setTimeout(() => detailCard.classList.add('d-none'), 350);
     });
 
-    // Клик по изображению в галерее
-    track.addEventListener('click', function(e){
-        const link = e.target.closest('a');
-        if (!link) return;
-        e.preventDefault();
+    async function loadFeed(q) {
+        track.innerHTML = '<div class="text-center py-5 text-muted">Загрузка...</div>';
+        try {
+            const res = await fetch('/api/jwst/feed?' + new URLSearchParams(q));
+            const data = await res.json();
 
-        const fullUrl = link.href;
-        const thumbUrl = link.querySelector('img')?.src || fullUrl;
-        const caption = link.nextElementSibling?.textContent?.trim() || 'Без описания';
-
-        // Парсинг имени файла
-        const filename = fullUrl.split('/').pop().split('?')[0];
-        const parts = filename.split('-');
-        let program = '', obs = '', instrument = '', filter = '';
-
-        if (parts.length >= 5) {
-            program = 'JW' + parts[0].substring(2) + '-' + parts[1];
-            obs = parts[2].substring(1);
-            const rest = parts.slice(3).join('-');
-            const instMatch = rest.match(/(nircam|miri|niriss|nirspec|fgs)/i);
-            instrument = instMatch ? instMatch[0].toUpperCase() : '';
-            const filterMatch = rest.match(/_(f\d+w)/i);
-            filter = filterMatch ? filterMatch[1].toUpperCase() : '';
-        }
-        
-        detailContent.innerHTML = `
-            <div class="col-lg-7">
-              <h5 class="card-title mb-4">JWST — выбранное наблюдение</h5>
-              <div class="text-center mb-4">
-                  <img src="${fullUrl}" class="img-fluid rounded shadow-lg" alt="JWST" style="max-height: 70vh;">
-              </div>
-              <div class="small text-muted lh-lg">
-                  <strong>Программа:</strong> ${program || '—'}<br>
-                  <strong>Наблюдение:</strong> ${obs ? 'Observation ' + obs : '—'}<br>
-                  <strong>Инструмент:</strong> ${instrument || '—'}<br>
-                  <strong>Фильтр:</strong> ${filter || '—'}<br>
-                  <strong>Файл:</strong> <code>${filename}</code><br><br>
-                  <strong>Описание:</strong>
-                  <div class="mt-2 p-3 bg-light rounded border">${caption.replace(/</g, '&lt;')}</div>
-              </div>
-              <div class="mt-4 text-center">
-                  <a href="${fullUrl}" target="_blank" class="btn btn-primary">Скачать изображение</a>
-              </div>
-            </div>
-        `;
-
-        // Показываем карточку с анимацией
-        detailCard.classList.remove('d-none');
-        setTimeout(() => detailCard.style.opacity = '1', 50);
-        detailCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    // Загрузка галереи
-    async function loadFeed(q){
-        track.innerHTML = '<div class="text-center py-5 text-muted">Загрузка изображений...</div>';
-        try{
-            const url = '/api/jwst/feed?' + new URLSearchParams(q).toString();
-            const r = await fetch(url);
-            const js = await r.json();
             track.innerHTML = '';
-            (js.items||[]).forEach(it => {
+            info.textContent = `Показано: ${data.items?.length || 0}`;
+
+            (data.items || []).forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'jwst-item';
+
+                // Короткая подпись — только программа и наблюдение
+                const shortCaption = item.program && item.obs 
+                    ? `JW${String(item.program).padStart(5, '0')} • ${item.obs}`
+                    : 'JWST';
+
                 div.innerHTML = `
-                    <figure class="m-0">
-                        <a href="${it.link||it.url}" target="_blank" rel="noreferrer">
-                            <img loading="lazy" src="${it.url}" alt="JWST">
-                        </a>
-                        <figcaption class="jwst-cap text-truncate">${(it.caption||'').replace(/</g,'&lt;')}</figcaption>
-                    </figure>`;
+                    <a href="#" class="text-decoration-none d-block">
+                        <div class="position-relative overflow-hidden rounded shadow-sm bg-dark">
+                            <img loading="lazy"
+                                 src="${item.url}"
+                                 class="w-100"
+                                 style="height: 200px; object-fit: cover; transition: transform .3s;"
+                                 alt="JWST">
+                            <div class="position-absolute bottom-0 start-0 end-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <div class="text-white small fw-medium text-shadow">
+                                    ${shortCaption}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                `;
+
+                const a = div.querySelector('a');
+                // Сохраняем ВСЁ в data-атрибутах
+                a.dataset.url      = item.url;
+                a.dataset.caption  = (item.caption || '').trim() || 'Без описания';
+                a.dataset.program  = item.program || '';
+                a.dataset.obs      = item.obs || '';
+                a.dataset.suffix   = item.suffix || '';
+                a.dataset.inst     = (item.inst || []).join(', ');
+
+                // Ховер-эффект
+                const img = div.querySelector('img');
+                div.addEventListener('mouseenter', () => img.style.transform = 'scale(1.08)');
+                div.addEventListener('mouseleave', () => img.style.transform = 'scale(1)');
+
                 track.appendChild(div);
             });
-            info.textContent = `Источник: ${js.source} · Показано ${js.count||0} изображений`;
-        }catch(e){
-            track.innerHTML = '<div class="text-danger p-4">Ошибка загрузки галереи</div>';
+        } catch (e) {
+            track.innerHTML = '<div class="text-danger p-4">Ошибка загрузки</div>';
+            console.error(e);
         }
     }
 
-    form.addEventListener('submit', ev => {
-        ev.preventDefault();
-        const fd = new FormData(form);
-        const q = Object.fromEntries(fd.entries());
-        loadFeed(q);
+    // Клик — показываем ВСЮ информацию только здесь
+    track.addEventListener('click', function(e) {
+        const a = e.target.closest('a');
+        if (!a) return;
+        e.preventDefault();
+
+        const url     = a.dataset.url;
+        const caption = a.dataset.caption;
+        const program = a.dataset.program;
+        const obs     = a.dataset.obs;
+        const inst    = a.dataset.inst;
+        const suffix  = a.dataset.suffix;
+
+        // Извлекаем фильтр из суффикса (например _f200w)
+        const filter = suffix.match(/_(f\d+w)/i)?.[1].toUpperCase() || '';
+
+        detailContent.innerHTML = `
+            <h5 class="card-title mb-4">JWST — выбранное наблюдение</h5>
+            
+            <div class="text-center mb-4">
+                <img src="${url}" class="img-fluid rounded shadow" style="max-height: 68vh; max-width: 100%;">
+            </div>
+
+            <div class="small text-muted lh-lg">
+                ${program ? `<strong>Программа:</strong> JW${String(program).padStart(5, '0')}<br>` : ''}
+                ${obs ? `<strong>Наблюдение:</strong> ${obs}<br>` : ''}
+                ${inst ? `<strong>Инструмент:</strong> ${inst}<br>` : ''}
+                ${filter ? `<strong>Фильтр:</strong> ${filter}<br>` : ''}
+                <strong>Файл:</strong> <code class="text-break small">${url.split('/').pop()}</code>
+            </div>
+
+            ${caption !== 'Без описания' ? `
+                <hr class="my-4">
+                <div class="small">
+                    <strong>Описание:</strong>
+                    <div class="p-3 bg-light rounded border mt-2 small">${caption.replace(/\n/g, '<br>')}</div>
+                </div>
+            ` : ''}
+
+            <div class="mt-4 text-center">
+                <a href="${url}" target="_blank" class="btn btn-primary btn-sm">Скачать изображение</a>
+            </div>
+        `;
+
+        detailCard.classList.remove('d-none');
+        setTimeout(() => detailCard.style.opacity = '1', 50);
+        detailCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
-    document.getElementById('scrollLeft').addEventListener('click', () => track.scrollBy({left: -600, behavior: 'smooth'}));
-    document.getElementById('scrollRight').addEventListener('click', () => track.scrollBy({left:  600, behavior: 'smooth'}));
+    // Фильтры и прокрутка
+    document.getElementById('jwstFilter')?.addEventListener('submit', e => {
+        e.preventDefault();
+        loadFeed(Object.fromEntries(new FormData(e.target)));
+    });
 
-    loadFeed({source:'jpg', perPage:24});
+    document.getElementById('scrollLeft')?.addEventListener('click', () => track.scrollBy({left: -600, behavior: 'smooth'}));
+    document.getElementById('scrollRight')?.addEventListener('click', () => track.scrollBy({left: 600, behavior: 'smooth'}));
+
+    loadFeed({ source: 'jpg', perPage: 24 });
 });
 </script>
 @endsection

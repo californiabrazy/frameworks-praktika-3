@@ -11,7 +11,7 @@
             <!-- Форма поиска -->
             <form method="GET" class="mb-4">
                 <div class="row g-3 justify-content-start">
-                    <div class="col-lg-4 col-md-8">
+                    <div class="col-lg-3 col-md-8">
                         <input type="text"
                                name="search"
                                class="form-control"
@@ -19,7 +19,7 @@
                                value="{{ request('search') }}"
                                autofocus>
                     </div>
-                    <div class="col-lg-2 col-md-4">
+                    <div class="col-lg-1 col-md-4">
                         <button type="submit" class="btn btn-primary w-100">Найти</button>
                     </div>
                     @if(request('search'))
@@ -36,9 +36,21 @@
                     <thead class="">
                         <tr>
                             <th width="60" class="text-center">#</th>
-                            <th width="120">ID датасета</th>
-                            <th width="120">Название датасета</th>
-                            <th width="110">Время добавления</th>
+                            <th width="120">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'dataset_id', 'sort_order' => ($sort_by === 'dataset_id' && $sort_order === 'asc' ? 'desc' : 'asc')]) }}" class="text-decoration-none text-dark">
+                                    ID датасета
+                                </a>
+                            </th>
+                            <th width="120">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'title', 'sort_order' => ($sort_by === 'title' && $sort_order === 'asc' ? 'desc' : 'asc')]) }}" class="text-decoration-none text-dark">
+                                    Название датасета
+                                </a>
+                            </th>
+                            <th width="110">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'inserted_at', 'sort_order' => ($sort_by === 'inserted_at' && $sort_order === 'asc' ? 'desc' : 'asc')]) }}" class="text-decoration-none text-dark">
+                                    Время добавления
+                                </a>
+                            </th>
                             <th width="70" class="text-center">JSON</th>
                             <th width="200">RAW</th>
                         </tr>
