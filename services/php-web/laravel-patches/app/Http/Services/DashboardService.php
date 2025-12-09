@@ -84,6 +84,7 @@ class DashboardService
                 'program' => (string)($it['program'] ?? ''),
                 'suffix' => (string)($it['details']['suffix'] ?? $it['suffix'] ?? ''),
                 'inst' => $instList,
+                'caption' => (string)($it['caption'] ?? $it['description'] ?? ''),
             ];
 
             if (count($items) >= $per) break;
