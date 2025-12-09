@@ -3,7 +3,6 @@ use axum::{
     Json,
 };
 use serde_json::{json, Value};
-use chrono::Utc; 
 use crate::config::AppState;
 use crate::models::{ApiError, Trend};
 use crate::repo::IssRepo;
