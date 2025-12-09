@@ -53,7 +53,7 @@
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <span>Время:</span>
-                <span>{{ $last['fetched_at'] ?? '—' }}</span>
+                <span>{{ $last['fetched_at'] ? \Carbon\Carbon::parse($last['fetched_at'])->format('d.m.Y H:i:s') : '—' }}</span>
               </li>
             </ul>
           @else

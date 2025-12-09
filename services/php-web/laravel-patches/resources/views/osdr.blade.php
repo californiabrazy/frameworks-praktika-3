@@ -86,7 +86,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="small text-muted">{{ $row['inserted_at'] ?? '—' }}</td>
+                                <td class="small text-muted">{{ $row['inserted_at'] ? \Carbon\Carbon::parse($row['inserted_at'])->format('d.m.Y H:i:s') : '—' }}</td>
                                 <td class="text-center">
                                     @if(!empty($row['rest_url']))
                                         <a href="{{ $row['rest_url'] }}" target="_blank" rel="noopener"
@@ -95,10 +95,8 @@
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td class="small text-muted" style="max-width: 200px;">
-                                    <div class="text-truncate" title="{{ json_encode($row['raw'] ?? []) }}">
-                                        {{ json_encode($row['raw'] ?? []) }}
-                                    </div>
+                                <td class="small text-muted">
+                                    <pre class="mb-0">{{ json_encode($row['raw'] ?? [], JSON_PRETTY_PRINT) }}</pre>
                                 </td>
                             </tr>
                         @empty

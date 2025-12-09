@@ -37,6 +37,17 @@ class OsdrController extends Controller
         $itemsDto = array_map(fn($item) => new OsdrItemDto($item), $items);
         $itemsArray = array_map(fn($dto) => $dto->toArray(), $itemsDto);
 
+        // Группировка по dataset_id и выбор только последнего по inserted_at
+        $grouped = [];
+        foreach ($itemsArray as $item) {
+            $datasetId = $item['dataset_id'] ?? '';
+            $insertedAt = strtotime($item['inserted_at'] ?? '');
+            if (!isset($grouped[$datasetId]) || $insertedAt > strtotime($grouped[$datasetId]['inserted_at'] ?? '')) {
+                $grouped[$datasetId] = $item;
+            }
+        }
+        $itemsArray = array_values($grouped);
+
         // Фильтрация по поиску
         if ($search !== '') {
             $itemsArray = array_filter($itemsArray, function($item) use ($search) {

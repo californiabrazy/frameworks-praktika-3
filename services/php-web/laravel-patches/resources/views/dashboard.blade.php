@@ -12,13 +12,13 @@
                         <h5 class="card-title m-0">Астрономические события (AstronomyAPI)</h5>
                         <form id="astroForm" class="row g-2 align-items-center">
                             <div class="col-auto">
-                                <input type="number" step="0.0001" class="form-control form-control-sm" name="lat" value="55.7558" placeholder="lat">
+                                <input type="number" step="0.0001" class="form-control form-control-sm" name="lat" value="55.7558" placeholder="lat" style="width:120px">
                             </div>
                             <div class="col-auto">
-                                <input type="number" step="0.0001" class="form-control form-control-sm" name="lon" value="37.6176" placeholder="lon">
+                                <input type="number" step="0.0001" class="form-control form-control-sm" name="lon" value="37.6176" placeholder="lon" style="width:120px">
                             </div>
                             <div class="col-auto">
-                                <input type="number" min="1" max="30" class="form-control form-control-sm" name="days" value="7" style="width:90px" title="дней">
+                                <input type="number" min="1" max="30" class="form-control form-control-sm" name="days" value="7" style="width:120px" title="дней">
                             </div>
                             <div class="col-auto">
                                 <button class="btn btn-sm btn-primary" type="submit">Показать</button>
@@ -27,7 +27,7 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -59,24 +59,27 @@
                         <h5 class="card-title m-0">JWST — последние изображения</h5>
                         <form id="jwstFilter" class="row g-2 align-items-center">
                             <div class="col-auto">
-                                <select class="form-select form-select-sm" name="source" id="srcSel">
+                                <select class="form-select form-select-sm" name="source" id="srcSel" style="width:120px">
                                     <option value="jpg" selected>Все JPG</option>
                                     <option value="suffix">По суффиксу</option>
                                     <option value="program">По программе</option>
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <input type="text" class="form-control form-control-sm" name="suffix" id="suffixInp" placeholder="_cal / _thumb" style="width:140px;display:none">
-                                <input type="text" class="form-control form-control-sm" name="program" id="progInp" placeholder="2734" style="width:110px;display:none">
+                                <select class="form-select form-select-sm" name="suffix" id="suffixInp" style="width:120px;display:none">
+                                    <option value="_cal">_cal</option>
+                                    <option value="_thumb">_thumb</option>
+                                </select>
+                                <input type="text" class="form-control form-control-sm" name="program" id="progInp" placeholder="2734" style="width:120px;display:none">
                             </div>
                             <div class="col-auto">
-                                <select class="form-select form-select-sm" name="instrument">
-                                    <option value="">Любой инструмент</option>
+                                <select class="form-select form-select-sm" name="instrument" style="width:120px">
+                                    <option value="">Любой</option>
                                     <option>NIRCam</option><option>MIRI</option><option>NIRISS</option><option>NIRSpec</option><option>FGS</option>
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <select class="form-select form-select-sm" name="perPage">
+                                <select class="form-select form-select-sm" name="perPage" style="width:120px">
                                     <option>12</option><option selected>24</option><option>36</option><option>48</option>
                                 </select>
                             </div>
@@ -342,13 +345,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // === JWST галерея + детальная карточка ===
-// === JWST галерея + детальная карточка — ЧИСТАЯ ВЕРСИЯ ===
 document.addEventListener('DOMContentLoaded', function () {
     const track         = document.getElementById('jwstTrack');
     const info          = document.getElementById('jwstInfo');
     const detailCard    = document.getElementById('jwstDetailCard');
     const detailContent = document.getElementById('detailContent');
     const closeBtn      = document.getElementById('closeDetail');
+    const srcSel        = document.getElementById('srcSel');
+    const suffixInp     = document.getElementById('suffixInp');
+    const progInp       = document.getElementById('progInp');
+
+    function toggleInputs() {
+        const val = srcSel.value;
+        suffixInp.style.display = val === 'suffix' ? 'block' : 'none';
+        progInp.style.display = val === 'program' ? 'block' : 'none';
+    }
+
+    srcSel.addEventListener('change', toggleInputs);
+    toggleInputs(); // initial call
 
     closeBtn.addEventListener('click', () => {
         detailCard.style.opacity = '0';
